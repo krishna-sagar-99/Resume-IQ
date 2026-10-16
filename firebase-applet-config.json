@@ -1,12 +1,12 @@
 {
-  "projectId": "codeveda-63773",
-  "appId": "1:713142455879:web:7130f6705be5c971fdeb62",
-  "apiKey": "AIzaSyD1naW9X-O7Tsr8amiLIpyrG3Anl75XwaQ",
-  "authDomain": "codeveda-63773.firebaseapp.com",
+  "projectId": "gen-lang-client-0113478590",
+  "appId": "1:33559584701:web:c3a0b7c1cb9f50480e7cd4",
+  "apiKey": "AIzaSyAEslrgiLudCYwi4vjsI6EZC2zAPDglPXk",
+  "authDomain": "gen-lang-client-0113478590.firebaseapp.com",
   "firestoreDatabaseId": "ai-studio-resumeiq-f54ff2a1-f6dd-43a9-841a-94e5d0e3bbdf",
-  "storageBucket": "codeveda-63773.firebasestorage.app",
-  "messagingSenderId": "713142455879",
+  "storageBucket": "gen-lang-client-0113478590.firebasestorage.app",
+  "messagingSenderId": "33559584701",
   "measurementId": "",
-  "oAuthClientId": "713142455879-6ri64ep364l2u8nq9u7hct15qbbl0bmm.apps.googleusercontent.com",
+  "oAuthClientId": "",
   "recaptchaSiteKey": ""
 }
