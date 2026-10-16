@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(ownerId) {
+      return isSignedIn() && request.auth.uid == ownerId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // Recruiter Profile
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId);
+      allow update: if isOwner(userId) && isValidId(userId);
+      allow delete: if isOwner(userId);
+      allow list: if false;
+    }
+
+    // Job Descriptions
+    match /jobs/{jobId} {
+      allow get: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(jobId) && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(jobId) && resource.data.ownerId == request.auth.uid && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isSignedIn() && isValidId(jobId) && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Resume Records
+    match /resumes/{resumeId} {
+      allow get: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(resumeId) && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(resumeId) && resource.data.ownerId == request.auth.uid && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isSignedIn() && isValidId(resumeId) && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Candidate Profiles
+    match /candidates/{candidateId} {
+      allow get: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(candidateId) && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(candidateId) && resource.data.ownerId == request.auth.uid && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isSignedIn() && isValidId(candidateId) && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Screening Sessions
+    match /sessions/{sessionId} {
+      allow get: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(sessionId) && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(sessionId) && resource.data.ownerId == request.auth.uid && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isSignedIn() && isValidId(sessionId) && resource.data.ownerId == request.auth.uid;
+    }
+
+    // Candidate Screening Results
+    match /results/{resultId} {
+      allow get: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.ownerId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(resultId) && request.resource.data.ownerId == request.auth.uid;
+      allow update: if isSignedIn() && isValidId(resultId) && resource.data.ownerId == request.auth.uid && request.resource.data.ownerId == resource.data.ownerId;
+      allow delete: if isSignedIn() && isValidId(resultId) && resource.data.ownerId == request.auth.uid;
+    }
+  }
+}

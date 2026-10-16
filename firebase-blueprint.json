@@ -1,0 +1,135 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Recruiter profile information and personalized preferences",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "company": { "type": "string", "maxLength": 100 },
+        "theme": { "type": "string", "enum": ["light", "dark"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "JobDescription": {
+      "title": "JobDescription",
+      "description": "Job posting with requirements and criteria created by a recruiter",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "title": { "type": "string", "maxLength": 200 },
+        "company": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 15000 },
+        "status": { "type": "string", "enum": ["Draft", "Ready"] },
+        "requirements": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "title", "description", "status"]
+    },
+    "ResumeRecord": {
+      "title": "ResumeRecord",
+      "description": "Uploaded resume metadata and extracted raw text",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "fileName": { "type": "string", "maxLength": 255 },
+        "fileHash": { "type": "string", "maxLength": 64 },
+        "storagePath": { "type": "string", "maxLength": 500 },
+        "status": { "type": "string", "enum": ["Queued", "Extracting", "Ready", "Failed"] },
+        "extractionMethod": { "type": "string", "enum": ["text", "ocr"] },
+        "textLength": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "fileName", "fileHash", "status"]
+    },
+    "CandidateProfile": {
+      "title": "CandidateProfile",
+      "description": "Structured candidate profile extracted from resume",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "resumeId": { "type": "string" },
+        "profile": { "type": "object" },
+        "corrections": { "type": "object" },
+        "extractionConfidence": { "type": "string", "enum": ["High", "Medium", "Low"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "resumeId", "extractionConfidence"]
+    },
+    "ScreeningSession": {
+      "title": "ScreeningSession",
+      "description": "A specific resume screening run tied to a job snapshot and scoring config",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "name": { "type": "string", "maxLength": 200 },
+        "jobId": { "type": "string" },
+        "jobSnapshot": { "type": "object" },
+        "scoringConfig": { "type": "object" },
+        "scoringVersion": { "type": "string" },
+        "status": { "type": "string", "enum": ["Active", "Completed", "Archived"] },
+        "candidateCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "name", "scoringConfig", "status"]
+    },
+    "ScreeningResult": {
+      "title": "ScreeningResult",
+      "description": "Deterministic scoring result and evidence matching for a candidate in a session",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "ownerId": { "type": "string" },
+        "sessionId": { "type": "string" },
+        "candidateId": { "type": "string" },
+        "score": { "type": "number" },
+        "category": { "type": "string", "enum": ["Strong Match", "Partial Match", "Low Match"] },
+        "confidence": { "type": "string", "enum": ["High", "Medium", "Low"] },
+        "breakdown": { "type": "object" },
+        "requirementStatus": { "type": "object" },
+        "evidence": { "type": "array" },
+        "explanation": { "type": "object" },
+        "reviewStatus": { "type": "string", "enum": ["New", "Shortlist", "Hold", "Reject"] },
+        "notes": { "type": "string", "maxLength": 5000 },
+        "tags": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "sessionId", "candidateId", "score", "category", "reviewStatus"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User recruiter account profile"
+    },
+    "/jobs/{jobId}": {
+      "schema": { "$ref": "#/entities/JobDescription" },
+      "description": "Job descriptions owned by recruiters"
+    },
+    "/resumes/{resumeId}": {
+      "schema": { "$ref": "#/entities/ResumeRecord" },
+      "description": "Resume upload records"
+    },
+    "/candidates/{candidateId}": {
+      "schema": { "$ref": "#/entities/CandidateProfile" },
+      "description": "Extracted candidate profiles"
+    },
+    "/sessions/{sessionId}": {
+      "schema": { "$ref": "#/entities/ScreeningSession" },
+      "description": "Screening sessions"
+    },
+    "/results/{resultId}": {
+      "schema": { "$ref": "#/entities/ScreeningResult" },
+      "description": "Candidate screening results and evaluation"
+    }
+  }
+}

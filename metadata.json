@@ -1,0 +1,7 @@
+{
+  "name": "ResumeIQ",
+  "description": "AI-powered resume screening and job matching platform for recruiters with deterministic scoring and verified evidence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
