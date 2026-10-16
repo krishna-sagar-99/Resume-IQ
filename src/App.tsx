@@ -11,12 +11,7 @@ import { RankingsPage } from './pages/RankingsPage.tsx';
 import { CandidateDetailsPage } from './pages/CandidateDetailsPage.tsx';
 import { HistoryPage } from './pages/HistoryPage.tsx';
 import { SettingsPage } from './pages/SettingsPage.tsx';
-import { testConnection, db } from './firebase.ts';
-import { SAMPLE_JOBS, SAMPLE_CANDIDATES_RAW } from './utils/sampleData.ts';
-import { doc, setDoc } from 'firebase/firestore';
-import { DEFAULT_SCORING_CONFIG, computeDeterministicScore } from './utils/scoring.ts';
-import { computeSublinearTfIdfCosine } from './utils/nlp.ts';
-import { storeJob, storeResume, storeCandidate, storeSession, storeResult } from './utils/dataStore.ts';
+import { testConnection } from './firebase.ts';
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
@@ -26,7 +21,6 @@ const AppContent: React.FC = () => {
   const [selectedResultId, setSelectedResultId] = useState<string | null>(null);
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [demoLoading, setDemoLoading] = useState(false);
 
   // Test connection on boot as required by firebase skill
   useEffect(() => {
@@ -49,156 +43,7 @@ const AppContent: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // 1-Click Load Realistic Demo Data into recruiter's account
-  const handleLoadDemoData = async () => {
-    if (!user) return;
-    setDemoLoading(true);
-    try {
-      toast('Loading sample jobs and screened candidate resumes...', 'info');
 
-      // 1. Create sample jobs
-      const createdJobIds: string[] = [];
-      for (const sampleJob of SAMPLE_JOBS) {
-        const jobId = `demo_job_${Math.random().toString(36).slice(2, 8)}`;
-        const jobDoc = {
-          ...sampleJob,
-          id: jobId,
-          ownerId: user.uid,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        };
-        await storeJob(jobDoc as any);
-        createdJobIds.push(jobId);
-      }
-
-      const primaryJob = SAMPLE_JOBS[0];
-      const primaryJobId = createdJobIds[0];
-
-      // 2. Create sample screening session
-      const sessionId = `demo_session_${Math.random().toString(36).slice(2, 8)}`;
-      const candidateIds: string[] = [];
-
-      // 3. Create sample resumes, candidates, and screening results
-      for (let i = 0; i < SAMPLE_CANDIDATES_RAW.length; i++) {
-        const item = SAMPLE_CANDIDATES_RAW[i];
-        const resumeId = `demo_res_${Math.random().toString(36).slice(2, 8)}`;
-        const candidateId = `demo_cand_${Math.random().toString(36).slice(2, 8)}`;
-        const resultId = `demo_result_${sessionId}_${candidateId}`;
-
-        // Save Resume record
-        await storeResume({
-          id: resumeId,
-          ownerId: user.uid,
-          fileName: item.fileName,
-          fileHash: `hash_demo_${i}_${Date.now()}`,
-          status: 'Ready',
-          extractionMethod: 'text',
-          textLength: item.rawText.length,
-          rawText: item.rawText,
-          isSample: true,
-          createdAt: new Date().toISOString()
-        });
-
-        // Save Candidate profile
-        await storeCandidate({
-          id: candidateId,
-          ownerId: user.uid,
-          resumeId,
-          profile: item.profile,
-          extractionConfidence: 'High',
-          isSample: true,
-          createdAt: new Date().toISOString()
-        });
-        candidateIds.push(candidateId);
-
-        // Compute deterministic match score
-        const tfidf = computeSublinearTfIdfCosine(
-          `${primaryJob.title} ${primaryJob.description}`,
-          item.rawText
-        );
-
-        const candSkillNames = (item.profile.skills || []).map((s: any) => typeof s === 'string' ? s : s.name);
-        const breakdown = computeDeterministicScore(
-          {
-            requiredSkills: primaryJob.requirements.requiredSkills,
-            preferredSkills: primaryJob.requirements.preferredSkills,
-            minYearsExperience: primaryJob.requirements.minYearsExperience,
-            educationLevel: primaryJob.requirements.educationLevel
-          },
-          {
-            skills: candSkillNames,
-            experience: item.profile.experience,
-            education: item.profile.education,
-            projects: item.profile.projects,
-            certifications: item.profile.certifications
-          },
-          tfidf.similarity,
-          DEFAULT_SCORING_CONFIG
-        );
-
-        // Save Screening Result
-        await storeResult({
-          id: resultId,
-          ownerId: user.uid,
-          sessionId,
-          candidateId,
-          score: breakdown.totalScore,
-          category: breakdown.category,
-          confidence: breakdown.confidence,
-          mustHaveMissing: breakdown.mustHaveMissing,
-          missingMustHaves: breakdown.missingMustHaves,
-          breakdown,
-          tfidfSimilarity: tfidf.similarity,
-          sharedKeywords: tfidf.sharedTokens,
-          explanation: {
-            whyThisScore: `Candidate scored ${breakdown.totalScore}/100 with ${breakdown.matchedRequiredSkills.filter(s => s.status === 'Found').length} of ${primaryJob.requirements.requiredSkills.length} required skills verified in text.`,
-            whatCouldRaiseConfidence: 'Conduct a technical architecture discussion to verify deep production scaling expertise.'
-          },
-          reviewStatus: i === 0 ? 'Shortlist' : 'New',
-          notes: i === 0 ? 'High potential for Senior Backend role. Strong microservices experience.' : '',
-          tags: i === 0 ? ['Top Candidate', 'AWS Expert'] : [],
-          history: [
-            {
-              timestamp: new Date().toISOString(),
-              action: `Screened against "${primaryJob.title}"`,
-              by: user.displayName || 'Recruiter'
-            }
-          ],
-          createdAt: new Date().toISOString()
-        });
-      }
-
-      // Save Session record
-      await storeSession({
-        id: sessionId,
-        ownerId: user.uid,
-        name: `${primaryJob.title} - Sample Screening Run`,
-        jobId: primaryJobId,
-        jobSnapshot: {
-          ...primaryJob,
-          id: primaryJobId,
-          ownerId: user.uid,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
-        },
-        scoringConfig: DEFAULT_SCORING_CONFIG,
-        scoringVersion: DEFAULT_SCORING_CONFIG.version,
-        status: 'Active',
-        candidateIds,
-        isSample: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
-
-      toast('Sample data loaded! 2 jobs and 3 screened candidates ready for testing.', 'success');
-      handleNavigate('rankings');
-    } catch (err: any) {
-      console.error('Error loading sample data:', err);
-      toast(err.message || 'Failed to load sample data', 'error');
-    } finally {
-      setDemoLoading(false);
-    }
-  };
 
   // If loading authentication
   if (loading) {
@@ -261,8 +106,6 @@ const AppContent: React.FC = () => {
           title={getPageTitle(currentPage)}
           subtitle={getPageSubtitle(currentPage)}
           onOpenMobileSidebar={() => setIsMobileSidebarOpen(true)}
-          onLoadDemoData={handleLoadDemoData}
-          demoLoading={demoLoading}
         />
 
         <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto">

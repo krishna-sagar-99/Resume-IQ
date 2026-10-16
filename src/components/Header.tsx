@@ -1,21 +1,17 @@
 import React from 'react';
-import { Menu, Sun, Moon, Eye, EyeOff, Sparkles } from 'lucide-react';
+import { Menu, Sun, Moon, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.tsx';
 
 interface HeaderProps {
   title: string;
   subtitle?: string;
   onOpenMobileSidebar: () => void;
-  onLoadDemoData?: () => void;
-  demoLoading?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
   title,
   subtitle,
-  onOpenMobileSidebar,
-  onLoadDemoData,
-  demoLoading
+  onOpenMobileSidebar
 }) => {
   const { theme, setTheme, blindReview, setBlindReview } = useAuth();
 
@@ -45,7 +41,7 @@ export const Header: React.FC<HeaderProps> = ({
         {/* Blind review toggle */}
         <button
           onClick={() => setBlindReview(!blindReview)}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded border transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 ${
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium border rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 ${
             blindReview
               ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/60'
               : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:bg-slate-50'
@@ -65,20 +61,6 @@ export const Header: React.FC<HeaderProps> = ({
             </>
           )}
         </button>
-
-        {/* Demo Sample Data Button */}
-        {onLoadDemoData && (
-          <button
-            onClick={onLoadDemoData}
-            disabled={demoLoading}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 border border-slate-300 dark:border-slate-700 rounded transition-colors disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600"
-            title="Load sample jobs and resumes into your recruiter account"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-blue-700 dark:text-blue-400" />
-            <span className="hidden md:inline">{demoLoading ? 'Loading Sample...' : 'Load Sample Data'}</span>
-            <span className="md:hidden">Demo</span>
-          </button>
-        )}
 
         {/* Theme toggle */}
         <button
